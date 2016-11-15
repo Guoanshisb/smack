@@ -280,10 +280,43 @@ void SmackInstGenerator::visitBinaryOperator(llvm::BinaryOperator& I) {
 
 void SmackInstGenerator::visitExtractValueInst(llvm::ExtractValueInst& evi) {
   processInstruction(evi);
-  const Expr* e = rep.expr(evi.getAggregateOperand());
-  for (unsigned i = 0; i < evi.getNumIndices(); i++)
-    e = Expr::fn(Naming::EXTRACT_VALUE, e, Expr::lit((unsigned long) evi.getIndices()[i]));
-  emit(Stmt::assign(rep.expr(&evi),e));
+  if (const CallInst* ci = llvm::dyn_cast<CallInst>(evi.getAggregateOperand())) {
+    if (ci->getCalledFunction()->getName().str() == "llvm.sadd.with.overflow.i32") {
+      if (evi.getIndices()[0] == 0) {
+        emit(Stmt::assign(rep.expr(&evi), rep.bop(Instruction::Add, ci->getArgOperand(0), ci->getArgOperand(1), ci->getArgOperand(0)->getType())));
+      }
+      if (evi.getIndices()[0] == 1) {
+        //emit(Stmt::assign(rep.expr(&evi), Expr::lit(0U)));
+        std::string flag = naming.get(evi);
+        const Instruction& value = *std::prev(std::prev(nextInst));
+        emit(Stmt::havoc(flag));
+        emit(Stmt::assume(Expr::and_(
+          Expr::impl(Expr::lt(Expr::id(naming.get(value)), rep.integerLit(2147483648L, 32)), Expr::eq(rep.expr(&evi), rep.integerLit(0L, 1))),
+          Expr::impl(Expr::not_(Expr::lt(Expr::id(naming.get(value)), rep.integerLit(2147483648L, 32))), Expr::eq(rep.expr(&evi), rep.integerLit(1L, 1)))
+        )));
+      }
+    }
+
+    if (ci->getCalledFunction()->getName().str() == "llvm.ssub.with.overflow.i32") {
+      if (evi.getIndices()[0] == 0) {
+        emit(Stmt::assign(rep.expr(&evi), rep.bop(Instruction::Sub, ci->getArgOperand(0), ci->getArgOperand(1), ci->getArgOperand(0)->getType())));
+      }
+      if (evi.getIndices()[0] == 1) {
+        //emit(Stmt::assign(rep.expr(&evi), Expr::lit(0U)));
+        std::string flag = naming.get(evi);
+        const Instruction& value = *std::prev(std::prev(nextInst));
+        emit(Stmt::havoc(flag));
+        emit(Stmt::assume(Expr::and_(
+          Expr::impl(Expr::lt(Expr::id(naming.get(value)), rep.integerLit(-2147483648L, 32)), Expr::eq(rep.expr(&evi), rep.integerLit(1L, 1))),
+          Expr::impl(Expr::not_(Expr::lt(Expr::id(naming.get(value)), rep.integerLit(-2147483648L, 32))), Expr::eq(rep.expr(&evi), rep.integerLit(0L, 1)))
+        )));
+      }
+    }
+  }
+  //const Expr* e = rep.expr(evi.getAggregateOperand());
+  //for (unsigned i = 0; i < evi.getNumIndices(); i++)
+  //  e = Expr::fn(Naming::EXTRACT_VALUE, e, Expr::lit((unsigned long) evi.getIndices()[i]));
+  //emit(Stmt::assign(rep.expr(&evi),e));
 }
 
 void SmackInstGenerator::visitInsertValueInst(llvm::InsertValueInst& ivi) {
@@ -457,6 +490,9 @@ void SmackInstGenerator::visitCallInst(llvm::CallInst& ci) {
   } else if (name.find("llvm.dbg.") != std::string::npos) {
     WARN("ignoring llvm.debug call.");
     emit(Stmt::skip());
+
+  } else if (name.find("llvm.trap") != std::string::npos) {
+    emit(Stmt::assert_(Expr::lit(false), {Attr::attr("overflow")}));
 
   } else if (name.find(Naming::VALUE_PROC) != std::string::npos) {
     emit(rep.valueAnnotation(ci));

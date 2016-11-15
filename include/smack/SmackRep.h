@@ -66,7 +66,6 @@ private:
   const Stmt* store(unsigned R, const Type* T, const Expr* P, const Expr* V);
 
   const Expr* cast(unsigned opcode, const llvm::Value* v, const llvm::Type* t);
-  const Expr* bop(unsigned opcode, const llvm::Value* lhs, const llvm::Value* rhs, const llvm::Type* t);
   const Expr* cmp(unsigned predicate, const llvm::Value* lhs, const llvm::Value* rhs);
 
   std::string procName(const llvm::User& U);
@@ -111,6 +110,7 @@ public:
 
   const Expr* bop(const llvm::BinaryOperator* BO);
   const Expr* bop(const llvm::ConstantExpr* CE);
+  const Expr* bop(unsigned opcode, const llvm::Value* lhs, const llvm::Value* rhs, const llvm::Type* t);
 
   const Expr* cmp(const llvm::CmpInst* I);
   const Expr* cmp(const llvm::ConstantExpr* CE);
