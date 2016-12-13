@@ -979,7 +979,22 @@ std::string SmackRep::getPrelude() {
   std::string b = std::to_string(ptrSizeInBits);
   std::string bt = "bv" + b;
   std::string it = "i" + b;
-  s << Decl::function(indexedName("$bv2int",{ptrSizeInBits}), {{"i",bt}}, it, NULL, {Attr::attr("builtin", "bv2int")}) << "\n";
+
+  std::string gb = "$bit2int";
+  s << "function {:inline} " << gb << "(i:bv1)" << " returns (" << it << ")";
+  s << "{ if $eq.bv1.bool(i, 1bv1) then 1 else 0 }\n";
+  s << "function {:inline} " << indexedName("$bv2int", {ptrSizeInBits}) << "(i:" << bt << ") returns (" << it << ")";
+  s << "{ ";
+
+  for (unsigned bit = 0; bit < ptrSizeInBits; ++bit) {
+    s << gb << "(i[" << std::to_string(bit+1) << ":" << std::to_string(bit) << "])*" + std::to_string(1UL << bit);
+    if (bit != ptrSizeInBits - 1)
+      s << " + ";
+  }
+
+  s << " }\n";
+
+  //s << Decl::function(indexedName("$bv2int",{ptrSizeInBits}), {{"i",bt}}, it, NULL, {Attr::attr("builtin", "bv2int")}) << "\n";
   s << Decl::function(indexedName("$int2bv",{ptrSizeInBits}), {{"i",it}}, bt, NULL, {Attr::attr("builtin", "(_ int2bv " + b + ")")}) << "\n";
   s << "\n";
 
