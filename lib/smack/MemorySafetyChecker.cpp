@@ -11,6 +11,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/GetElementPtrTypeIterator.h"
 
 namespace smack {
 
@@ -26,7 +27,49 @@ void insertMemoryLeakCheck(Function& F, Module& m) {
   }
 }
 
+Value* stripPointerCasts(Value* v) {
+  if (auto ci = dyn_cast<CastInst>(v)) {
+    if (ci->getSrcTy()->isPointerTy() && ci->getDestTy()->isPointerTy())
+      return ci->getOperand(0);
+  }
+  return v;
+}
+
 void inserMemoryAccessCheck(Value* memoryPointer, Instruction* I, DataLayout* dataLayout, Function* memorySafetyFunction, Function* F) {
+  if (auto gep = dyn_cast<GetElementPtrInst>(stripPointerCasts(memoryPointer))) {
+    Value* base = stripPointerCasts(gep->getPointerOperand());
+    if (auto ci = dyn_cast<CallInst>(base)) {
+      Function* f = ci->getCalledFunction();
+      if (f->hasName() && f->getName() == "malloc") {
+        assert(ci->getNumArgOperands() == 1 && "Malloc has only one argument");
+        if (auto arg = dyn_cast<ConstantInt>(ci->getArgOperand(0))) {
+          uint64_t size = arg->getZExtValue();
+          int64_t offset = 0;
+          bool allConst = true;
+          gep_type_iterator T = gep_type_begin(gep);
+          for (unsigned i = 1; i < gep->getNumOperands(); ++i, ++T) {
+            if (StructType* st = dyn_cast<StructType>(*T)) {
+              uint64_t fieldNo = dyn_cast<ConstantInt>(gep->getOperand(i))->getZExtValue();
+              offset += dataLayout->getStructLayout(st)->getElementOffset(fieldNo);
+            } else {
+              Type* et = dyn_cast<SequentialType>(*T)->getElementType();
+              if (auto cint = dyn_cast<ConstantInt>(gep->getOperand(i))) {
+                offset += cint->getSExtValue() * dataLayout->getTypeStoreSize(et);
+              } else {
+                allConst = false;
+                break;
+              }
+            }
+          }
+          if (allConst) {
+            if (offset < 0 || offset + dataLayout->getTypeStoreSize(cast<PointerType>(memoryPointer->getType())->getPointerElementType()) > size)
+              inserMemoryAccessCheck(ConstantPointerNull::get(PointerType::getUnqual(IntegerType::getInt8Ty(F->getContext()))), I, dataLayout, memorySafetyFunction, F);
+              return;
+          }
+        }
+      }
+    }
+  }
   // Finding the exact type of the second argument to our memory safety function
   Type* sizeType = memorySafetyFunction->getFunctionType()->getParamType(1);
   PointerType* pointerType = cast<PointerType>(memoryPointer->getType());
