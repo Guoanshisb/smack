@@ -70,6 +70,7 @@ const std::string Naming::UNDEF_SYM = "$u";
 const std::string Naming::CONTRACT_EXPR = "$expr";
 const std::string Naming::MEMORY_SAFETY_FUNCTION = "__SMACK_check_memory_safety";
 const std::string Naming::MEMORY_LEAK_FUNCTION = "__SMACK_check_memory_leak";
+const std::string Naming::CHECK_ALLOCATED = "__SMACK_check_allocated";
 
 using namespace llvm;
 

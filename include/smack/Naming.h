@@ -83,6 +83,7 @@ public:
   static const std::string CONTRACT_EXPR;
   static const std::string MEMORY_SAFETY_FUNCTION;
   static const std::string MEMORY_LEAK_FUNCTION;
+  static const std::string CHECK_ALLOCATED;
 
   static const std::map<unsigned,std::string> INSTRUCTION_TABLE;
   static const std::map<unsigned,std::string> CMPINST_TABLE;

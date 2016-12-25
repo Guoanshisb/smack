@@ -2124,6 +2124,10 @@ void __SMACK_check_memory_safety(void* pointer, unsigned long size) {
 void __SMACK_check_memory_leak() {
   __SMACK_code("assert {:valid_memtrack} $allocatedCounter == 0;");
 }
+
+void __SMACK_check_allocated(void* basePointer) {
+  __SMACK_code("assert {:valid_deref} $Alloc[@] == true;", basePointer);
+}
 #endif
 
 void __SMACK_init_func_memory_model(void) {

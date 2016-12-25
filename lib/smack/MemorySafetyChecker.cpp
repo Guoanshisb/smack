@@ -62,9 +62,11 @@ void inserMemoryAccessCheck(Value* memoryPointer, Instruction* I, DataLayout* da
             }
           }
           if (allConst) {
+            Function* checkAllocatedFunction = F->getParent()->getFunction(Naming::CHECK_ALLOCATED);
+            CallInst::Create(checkAllocatedFunction, {base}, "", &*I);
             if (offset < 0 || offset + dataLayout->getTypeStoreSize(cast<PointerType>(memoryPointer->getType())->getPointerElementType()) > size)
               inserMemoryAccessCheck(ConstantPointerNull::get(PointerType::getUnqual(IntegerType::getInt8Ty(F->getContext()))), I, dataLayout, memorySafetyFunction, F);
-              return;
+            return;
           }
         }
       }
