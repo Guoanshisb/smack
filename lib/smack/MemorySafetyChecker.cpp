@@ -38,6 +38,8 @@ Value* stripPointerCasts(Value* v) {
 void inserMemoryAccessCheck(Value* memoryPointer, Instruction* I, DataLayout* dataLayout, Function* memorySafetyFunction, Function* F) {
   if (auto gep = dyn_cast<GetElementPtrInst>(stripPointerCasts(memoryPointer))) {
     Value* base = stripPointerCasts(gep->getPointerOperand());
+    Function* checkAllocatedFunction = F->getParent()->getFunction(Naming::CHECK_ALLOCATED);
+    CallInst::Create(checkAllocatedFunction, {base}, "", &*I);
     if (auto ci = dyn_cast<CallInst>(base)) {
       Function* f = ci->getCalledFunction();
       if (f->hasName() && f->getName() == "malloc") {
@@ -62,8 +64,6 @@ void inserMemoryAccessCheck(Value* memoryPointer, Instruction* I, DataLayout* da
             }
           }
           if (allConst) {
-            Function* checkAllocatedFunction = F->getParent()->getFunction(Naming::CHECK_ALLOCATED);
-            CallInst::Create(checkAllocatedFunction, {base}, "", &*I);
             if (offset < 0 || offset + dataLayout->getTypeStoreSize(cast<PointerType>(memoryPointer->getType())->getPointerElementType()) > size)
               inserMemoryAccessCheck(ConstantPointerNull::get(PointerType::getUnqual(IntegerType::getInt8Ty(F->getContext()))), I, dataLayout, memorySafetyFunction, F);
             return;
@@ -71,6 +71,17 @@ void inserMemoryAccessCheck(Value* memoryPointer, Instruction* I, DataLayout* da
         }
       }
     }
+    Function* checkAccessBoundFunction = F->getParent()->getFunction(Naming::CHECK_ACCESS_BOUND);
+    Type* sizeType = checkAccessBoundFunction->getFunctionType()->getParamType(2);
+    PointerType* pointerType = cast<PointerType>(memoryPointer->getType());
+    uint64_t storeSize = dataLayout->getTypeStoreSize(pointerType->getPointerElementType());
+    Value* size = ConstantInt::get(sizeType, storeSize);
+    Type *voidPtrTy = PointerType::getUnqual(IntegerType::getInt8Ty(F->getContext()));
+    CastInst* castPointer = CastInst::Create(Instruction::BitCast, memoryPointer, voidPtrTy, "", &*I);
+    CastInst* castBasePointer = CastInst::Create(Instruction::BitCast, base, voidPtrTy, "", &*I);
+    Value* args[] = {castBasePointer, castPointer, size};
+    CallInst::Create(checkAccessBoundFunction, ArrayRef<Value*>(args, 3), "", &*I);
+    return;
   }
   // Finding the exact type of the second argument to our memory safety function
   Type* sizeType = memorySafetyFunction->getFunctionType()->getParamType(1);

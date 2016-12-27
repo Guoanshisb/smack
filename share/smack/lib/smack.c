@@ -2128,6 +2128,17 @@ void __SMACK_check_memory_leak() {
 void __SMACK_check_allocated(void* basePointer) {
   __SMACK_code("assert {:valid_deref} $Alloc[@] == true;", basePointer);
 }
+
+void __SMACK_check_access_bound(void* basePointer, void* pointer, unsigned long size) {
+  void* sizeRef = (void*)size;
+#if MEMORY_MODEL_NO_REUSE_IMPLS
+  __SMACK_code("assert {:valid_deref} $sle.ref.bool($add.ref(@, @), $add.ref(@, $Size(@)));", pointer, sizeRef, basePointer, basePointer);
+#elif MEMORY_MODEL_REUSE
+  __SMACK_code("assert {:valid_deref} $sle.ref.bool($add.ref(@, @), $add.ref(@, $Size[@]));", pointer, sizeRef, basePointer, basePointer);
+#else
+  __SMACK_code("assert {:valid_deref} $sle.ref.bool($add.ref(@, @), $add.ref(@, $Size(@)));", pointer, sizeRef, basePointer, basePointer);
+#endif
+}
 #endif
 
 void __SMACK_init_func_memory_model(void) {
