@@ -200,6 +200,7 @@ INSTALL(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/bin/boogie
   ${CMAKE_CURRENT_SOURCE_DIR}/bin/corral
   ${CMAKE_CURRENT_SOURCE_DIR}/bin/lockpwn
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/tracetransformer
   ${CMAKE_CURRENT_SOURCE_DIR}/bin/smack
   ${CMAKE_CURRENT_SOURCE_DIR}/bin/smack-doctor
   ${CMAKE_CURRENT_SOURCE_DIR}/bin/smack-svcomp-wrapper.sh

@@ -20,11 +20,12 @@
 ################################################################################
 
 # Set these flags to control various installation options
-INSTALL_DEPENDENCIES=1
-BUILD_Z3=1
-BUILD_BOOGIE=1
-BUILD_CORRAL=1
-BUILD_LOCKPWN=1
+INSTALL_DEPENDENCIES=0
+BUILD_Z3=0
+BUILD_BOOGIE=0
+BUILD_CORRAL=0
+BUILD_LOCKPWN=0
+BUILD_TT=0
 BUILD_SMACK=1
 TEST_SMACK=1
 BUILD_LLVM=0 # LLVM is typically installed from packages (see below)
@@ -37,6 +38,7 @@ Z3_DIR="${ROOT}/z3"
 BOOGIE_DIR="${ROOT}/boogie"
 CORRAL_DIR="${ROOT}/corral"
 LOCKPWN_DIR="${ROOT}/lockpwn"
+TT_DIR="${ROOT}/tracetransformer"
 MONO_DIR="${ROOT}/mono"
 LLVM_DIR="${ROOT}/llvm"
 
@@ -376,6 +378,19 @@ then
   puts "Built lockpwn"
 fi
 
+if [ ${BUILD_TT} -eq 1 ]
+then
+  puts "Building tracetransformer"
+
+  cd ${ROOT}
+  git clone https://github.com/Guoanshisb/TraceTransformer.git ${TT_DIR}
+  cd ${TT_DIR}
+  cp -r ${BOOGIE_DIR} .
+  msbuild TraceTransformer.sln /p:Configuration=Debug
+
+  puts "Built tracetransformer"
+fi
+
 if [ ${BUILD_SMACK} -eq 1 ]
 then
   puts "Building SMACK"
@@ -390,6 +405,7 @@ then
   echo export BOOGIE=\"mono ${BOOGIE_DIR}/Binaries/Boogie.exe\" >> ${SMACKENV}
   echo export CORRAL=\"mono ${CORRAL_DIR}/bin/Release/corral.exe\" >> ${SMACKENV}
   echo export LOCKPWN=\"mono ${LOCKPWN_DIR}/Binaries/lockpwn.exe\" >> ${SMACKENV}
+  echo export TRACETRANSFORMER=\"mono ${TT_DIR}/TraceTransformer/bin/Debug/TraceTransformer.exe\" >> ${SMACKENV}
   source ${SMACKENV}
   puts "The required environment variables have been set in ${SMACKENV}"
   puts "You should source ${SMACKENV} in your .bashrc"
