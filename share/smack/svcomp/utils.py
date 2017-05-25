@@ -300,7 +300,8 @@ def verify_bpl_svcomp(args):
     corral_command += ["/bopt:proverOpt:OPTIMIZE_FOR_BV=true"]
     corral_command += ["/bopt:boolControlVC"]
     if not args.bit_precise_pointers:
-      corral_command += ["/bopt:z3opt:smt.bv.enable_int2bv=true"]
+      #corral_command += ["/bopt:z3opt:smt.bv.enable_int2bv=true"]
+      pass
 
   if args.memory_safety:
     if args.prop_to_check == 'valid-deref':
@@ -325,6 +326,7 @@ def verify_bpl_svcomp(args):
   args.trace_file = smack.top.temporary_file(os.path.splitext(os.path.basename(args.bpl_file))[0]+"_trace", '.bpl', args)
   command += ["/traceProgram:%s" % args.trace_file]
 
+  print " ".join(command)
   verifier_output = smack.top.try_command(command, timeout=time_limit)
   result = smack.top.verification_result(verifier_output)
 
@@ -347,10 +349,12 @@ def verify_bpl_svcomp(args):
       result = smack.top.verification_result(verifier_output)
       if result == 'verified':
         print "Trace Transformer rejected this error trace"
+        sys.stdout.flush()
         args.bpl_file = args.input_transformed_file
         verify_bpl_svcomp(args)
       elif result == 'error' or result == 'invalid-deref' or result == 'invalid-free' or result == 'invalid-memtrack' or result == 'overflow':
         print "Trace Transformer confirmed this error trace"
+        sys.stdout.flush()
     if not args.quiet:
       error = smack.top.error_trace(verifier_output, args)
       print error
