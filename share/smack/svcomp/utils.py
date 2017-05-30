@@ -300,8 +300,8 @@ def verify_bpl_svcomp(args):
     corral_command += ["/bopt:proverOpt:OPTIMIZE_FOR_BV=true"]
     corral_command += ["/bopt:boolControlVC"]
     if not args.bit_precise_pointers:
-      #corral_command += ["/bopt:z3opt:smt.bv.enable_int2bv=true"]
-      pass
+      corral_command += ["/bopt:z3opt:smt.bv.enable_int2bv=true"]
+      #pass
 
   if args.memory_safety:
     if args.prop_to_check == 'valid-deref':
@@ -341,10 +341,13 @@ def verify_bpl_svcomp(args):
     if "Got nothing to do" in tt_output:
       print "There is no uninterpreted bv op"
     else:
+      print "Engage trace transformer"
+      sys.stdout.flush()
       args.bit_precise = True
       command[1] = args.trace_transformed_file
       command += ["/bopt:proverOpt:OPTIMIZE_FOR_BV=true"]
       command += ["/bopt:boolControlVC"]
+      command += ["/bopt:z3opt:smt.bv.enable_int2bv=true"]
       verifier_output = smack.top.try_command(command, timeout=time_limit)
       result = smack.top.verification_result(verifier_output)
       if result == 'verified':
