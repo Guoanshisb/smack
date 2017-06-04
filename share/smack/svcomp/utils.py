@@ -213,6 +213,7 @@ def verify_bpl_svcomp(args):
   corral_command = ["corral"]
   corral_command += [args.bpl_file]
   #corral_command += ["/tryCTrace", "/noTraceOnDisk", "/printDataValues:1"]
+  corral_command += ["/tryCTrace", "/printDataValues:1"]
   corral_command += ["/useProverEvaluate", "/cex:1"]
 
   with open(args.bpl_file, "r") as f:
@@ -348,6 +349,8 @@ def verify_bpl_svcomp(args):
       command += ["/bopt:proverOpt:OPTIMIZE_FOR_BV=true"]
       command += ["/bopt:boolControlVC"]
       command += ["/bopt:z3opt:smt.bv.enable_int2bv=true"]
+      command = list(filter(lambda x: x != "/tryCTrace" or x != "/printDataValues:1", command))
+      print " ".join(command)
       verifier_output = smack.top.try_command(command, timeout=time_limit)
       result = smack.top.verification_result(verifier_output)
       if result == 'verified':
