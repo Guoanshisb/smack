@@ -1001,18 +1001,19 @@ std::string SmackRep::getPrelude() {
   std::string b = std::to_string(ptrSizeInBits);
   std::string bt = "bv" + b;
   std::string it = "i" + b;
-  s << Decl::function(indexedName("$bv2uint",{ptrSizeInBits}), {{"i",bt}}, it, NULL, {Attr::attr("builtin", "bv2int")}) << "\n";
+  //s << Decl::function(indexedName("$bv2uint",{ptrSizeInBits}), {{"i",bt}}, it, NULL, {Attr::attr("builtin", "bv2int")}) << "\n";
+  s << Decl::function(indexedName("$bv2int",{ptrSizeInBits}), {{"i",bt}}, it, NULL, {Attr::attr("builtin", "bv2int")}) << "\n";
   s << Decl::function(indexedName("$int2bv",{ptrSizeInBits}), {{"i",it}}, bt, NULL, {Attr::attr("builtin", "(_ int2bv " + b + ")")}) << "\n";
-  const Expr* arg = Expr::id("i");
-  const Expr* uint = Expr::fn(indexedName("$bv2uint", {ptrSizeInBits}), arg);
-  std::string sub;
-  if (ptrSizeInBits == 32)
-    sub = "4294967296";
-  else if (ptrSizeInBits == 64)
-    sub = "18446744073709551616";
-  else
-    llvm_unreachable("Unexpected point bit width.");
-  s << Decl::function(indexedName("$bv2int",{ptrSizeInBits}), {{"i",bt}}, it, Expr::cond(Expr::fn(indexedName("$slt", {bt, "bool"}), {arg, Expr::lit(0UL, ptrSizeInBits)}), Expr::fn(indexedName("$sub", {it}), {uint, Expr::lit(sub, 0U)}), uint), {Attr::attr("inline")});
+  //const Expr* arg = Expr::id("i");
+  //const Expr* uint = Expr::fn(indexedName("$bv2uint", {ptrSizeInBits}), arg);
+  //std::string sub;
+  //if (ptrSizeInBits == 32)
+  //  sub = "4294967296";
+  //else if (ptrSizeInBits == 64)
+  //  sub = "18446744073709551616";
+  //else
+  //  llvm_unreachable("Unexpected point bit width.");
+  //s << Decl::function(indexedName("$bv2int",{ptrSizeInBits}), {{"i",bt}}, it, Expr::cond(Expr::fn(indexedName("$slt", {bt, "bool"}), {arg, Expr::lit(0UL, ptrSizeInBits)}), Expr::fn(indexedName("$sub", {it}), {uint, Expr::lit(sub, 0U)}), uint), {Attr::attr("inline")});
   s << "\n";
 
   if (SmackOptions::BitPrecise) {
