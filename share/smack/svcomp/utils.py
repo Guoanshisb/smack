@@ -147,6 +147,10 @@ def is_crappy_driver_benchmark(args, bpl):
     while (True):
       pass
 
+def force_timeout():
+  sys.stdout.flush()
+  time.sleep(1000)
+
 def verify_bpl_svcomp(args):
   """Verify the Boogie source file using SVCOMP-tuned heuristics."""
   heurTrace = "\n\nHeuristics Info:\n"
@@ -364,6 +368,14 @@ def verify_bpl_svcomp(args):
     if not args.quiet:
       error = smack.top.error_trace(verifier_output, args)
       print error
+    if args.memory_safety:
+      heurTrace += (args.prop_to_check + "has errors\n")
+      if args.prop_to_check == 'valid-free':
+        if args.valid_deref_check_result != 'verified':
+          force_timeout()
+      elif args.prop_to_check == 'memleak':
+        if args.valid_free_check_result == 'timeout':
+          force_timeout()
 
   elif result == 'timeout': #normal inlining
     heurTrace += "Timed out during normal inlining.\n"
@@ -405,7 +417,9 @@ def verify_bpl_svcomp(args):
         heurTrace += (args.prop_to_check + "is verified\n")
         if args.prop_to_check == 'valid-deref':
           args.valid_deref_check_result = 'verified'
-        if args.prop_to_check == 'memleak':
+        elif args.prop_to_check == 'valid-free':
+          args.valid_free_check_result = 'verified'
+        elif args.prop_to_check == 'memleak':
           if args.valid_deref_check_result == 'timeout':
             sys.stdout.flush()
             time.sleep(1000)
@@ -426,7 +440,9 @@ def verify_bpl_svcomp(args):
         heurTrace += (args.prop_to_check + " times out\n")
         if args.prop_to_check == 'valid-deref':
           args.valid_deref_check_result = 'timeout'
-        if args.prop_to_check == 'memleak':
+        elif args.prop_to_check == 'valid-free':
+          args.valid_free_check_result = 'timeout'
+        elif args.prop_to_check == 'memleak':
           if args.valid_deref_check_result == 'timeout':
             sys.stdout.flush()
             time.sleep(1000)
@@ -446,7 +462,9 @@ def verify_bpl_svcomp(args):
     heurTrace += (args.prop_to_check + " is verified\n")
     if args.prop_to_check == 'valid-deref':
       args.valid_deref_check_result = 'verified'
-    if args.prop_to_check == 'memleak':
+    elif args.prop_to_check == 'valid-free':
+      args.valid_free_check_result = 'verified'
+    elif args.prop_to_check == 'memleak':
       if args.valid_deref_check_result == 'timeout':
         sys.stdout.flush()
         time.sleep(1000)
