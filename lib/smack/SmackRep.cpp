@@ -1012,7 +1012,7 @@ std::string SmackRep::getPrelude() {
     sub = "18446744073709551616";
   else
     llvm_unreachable("Unexpected point bit width.");
-  s << Decl::function(indexedName("$bv2int",{ptrSizeInBits}), {{"i",bt}}, it, Expr::cond(Expr::fn(indexedName("$slt", {bt, "bool"}), {arg, Expr::lit(0UL, ptrSizeInBits)}), Expr::fn(indexedName("$add", {it}), {uint, Expr::lit(sub, 0U)}), uint), {Attr::attr("inline")});
+  s << Decl::function(indexedName("$bv2int",{ptrSizeInBits}), {{"i",bt}}, it, Expr::cond(Expr::fn(indexedName("$slt", {bt, "bool"}), {arg, Expr::lit(0UL, ptrSizeInBits)}), Expr::fn(indexedName("$sub", {it}), {uint, Expr::lit(sub, 0U)}), uint), {Attr::attr("inline")});
   s << "\n";
 
   if (SmackOptions::BitPrecise) {
