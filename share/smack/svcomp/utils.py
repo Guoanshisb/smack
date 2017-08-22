@@ -16,6 +16,7 @@ def svcomp_frontend(args):
   args.static_unroll = True
   # disable dynamic execution
   args.execute = False
+  args.bit_precise = True
 
   if len(args.input_files) > 1:
     raise RuntimeError("Expected a single SVCOMP input file.")
