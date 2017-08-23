@@ -28,8 +28,9 @@ def svcomp_frontend(args):
     # test bv and executable benchmarks
     file_type, executable = filters.svcomp_filter(args.input_files[0])
     if file_type == 'bitvector':
-      args.bit_precise = True
-      args.bit_precise_pointers = True
+      #args.bit_precise = True
+      #args.bit_precise_pointers = True
+      pass
     if file_type == 'float' and not args.signed_integer_overflow:
       #sys.exit(smack.top.results(args)['unknown'])
       args.float = True
@@ -43,7 +44,8 @@ def svcomp_frontend(args):
     with open(args.input_files[0], "r") as sf:
       sc = sf.read()
     if 'unsigned char b:2' in sc or "4294967294u" in sc:
-      args.bit_precise = True
+      #args.bit_precise = True
+      pass
       #args.bit_precise_pointers = True
 
   name, ext = os.path.splitext(os.path.basename(args.input_files[0]))
@@ -106,8 +108,9 @@ def svcomp_process_file(args, name, ext):
     if 'argv=malloc' in s:
 #      args.bit_precise = True
       if args.signed_integer_overflow and ('unsigned int d = (unsigned int)((signed int)(unsigned char)((signed int)*q | (signed int)(char)32) - 48);' in s or 'bb_ascii_isalnum' in s or 'ptm=localtime' in s or '0123456789.' in s):
-        args.bit_precise = True
-        args.bit_precise_pointers = True
+        #args.bit_precise = True
+        #args.bit_precise_pointers = True
+        pass
 
     length = len(s.split('\n'))
     if length < 60:
