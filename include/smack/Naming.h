@@ -85,6 +85,9 @@ public:
   static const std::string MEMORY_SAFETY_FUNCTION;
   static const std::string MEMORY_LEAK_FUNCTION;
 
+  static const std::string AV_PARTITION;
+  static const std::string AV_SLIC_ASSUME;
+
   static const std::map<unsigned,std::string> INSTRUCTION_TABLE;
   static const std::map<unsigned,std::string> CMPINST_TABLE;
   static const std::map<unsigned,std::string> ATOMICRMWINST_TABLE;

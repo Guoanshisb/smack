@@ -41,6 +41,7 @@
 #include "smack/MemorySafetyChecker.h"
 #include "smack/SignedIntegerOverflowChecker.h"
 #include "smack/SplitAggregateLoadStore.h"
+#include "smack/TagSlicAssume.h"
 
 static llvm::cl::opt<std::string>
 InputFilename(llvm::cl::Positional, llvm::cl::desc("<input LLVM bitcode file>"),
@@ -178,6 +179,7 @@ int main(int argc, char **argv) {
   pass_manager.add(new llvm::MergeArrayGEP());
   // pass_manager.add(new smack::SimplifyLibCalls());
   pass_manager.add(new llvm::Devirtualize());
+  pass_manager.add(new smack::TagSlicAssume());
 
   if (SplitStructs)
     pass_manager.add(new smack::SplitAggregateLoadStore());
