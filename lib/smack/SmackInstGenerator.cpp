@@ -194,16 +194,25 @@ void SmackInstGenerator::generateGotoStmts(
     for (unsigned i = 0; i < targets.size(); i++) {
       const Expr* condition = targets[i].first;
       llvm::BasicBlock* target = targets[i].second;
+      const Stmt* assumeStmt;
+
+      if (BranchInst* bi = dyn_cast<BranchInst>(&inst)) {
+        if (bi->hasMetadata() && bi->getMetadata(Naming::AV_SLIC_ASSUME))
+          assumeStmt = Stmt::assume(condition, Attr::attr(Naming::AV_SLIC_ASSUME));
+        else
+          assumeStmt = Stmt::assume(condition, Attr::attr(Naming::AV_PARTITION));
+      } else
+        assumeStmt = Stmt::assume(condition);
 
       if (target->getUniquePredecessor() == inst.getParent()) {
         Block* b = getBlock(target);
-        b->insert(Stmt::assume(condition));
+        b->insert(assumeStmt);
         dispatch.push_back(b->getName());
 
       } else {
         Block* b = createBlock();
         annotate(inst, b);
-        b->addStmt(Stmt::assume(condition));
+        b->addStmt(assumeStmt);
         b->addStmt(Stmt::goto_({getBlock(target)->getName()}));
         dispatch.push_back(b->getName());
       }
