@@ -549,7 +549,7 @@ def verify_bpl(args):
     fastavn_command += ['/entryPointExcludes:"devirtbounce(\.\d+)?"', "/entryPointExcludes:__VERIFIER_error"]
     fastavn_command += ["/hopt:killAfter:880"]
     fastavn_command += ["/aopt:sdv", "/aopt:blockOnFreeVars", "/aopt:timeoutEE:200", "/aopt:timeout:880", "/aopt:noEbasic", "/aopt:dontGeneralize", "/aopt:dumpResults:results.txt", "/aopt:EE:onlySlicAssumes+", "/aopt:EE:ignoreAllAssumes-", "/aopt:EE:noFilters", "/aopt:killAfter:880", "/aopt:copt:recursionBound:13"]
-    fastavn_command += ["/killAfter:880", "/numThreads:64", "/useMemNotDisk", "/useEntryPoints"]
+    fastavn_command += ["/killAfter:880", "/numThreads:32", "/useMemNotDisk", "/useEntryPoints"]
 
   else:
     # Duality!
@@ -569,7 +569,7 @@ def verify_bpl(args):
 
   if args.verifier == 'fastavn':
     try:
-      try_command(fastavn_command, cwd=work_dir, timeout=args.time_limit)
+      verifier_output = try_command(fastavn_command, cwd=work_dir, timeout=args.time_limit)
     except Exception as e:
       verifier_output = str(e)
   else:
