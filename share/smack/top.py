@@ -185,7 +185,7 @@ def arguments():
   verifier_group = parser.add_argument_group('verifier options')
 
   verifier_group.add_argument('--verifier',
-    choices=['boogie', 'corral', 'duality', 'svcomp'], default='corral',
+    choices=['boogie', 'corral', 'duality', 'svcomp', 'fastavn'], default='corral',
     help='back-end verification engine')
 
   verifier_group.add_argument('--unroll', metavar='N', default='1',
@@ -529,6 +529,28 @@ def verify_bpl(args):
     command += ["/maxStaticLoopBound:%d" % args.loop_limit]
     command += ["/recursionBound:%d" % args.unroll]
 
+  elif args.verifier == 'fastavn':
+    # create a directory first
+    bench_name = os.path.splitext(os.path.basename(args.input_files[0]))[0]
+    work_dir = os.path.join("/mnt/local/fastavn-results", bench_name)
+    if not os.path.exists(work_dir):
+      os.makedirs(work_dir)
+    inst_bpl_file = os.path.join(work_dir, bench_name+"-inst.bpl")
+
+    # run smackinst
+    smackinst_command = ["mono", "/mnt/local/av/AddOns/SmackInst/SmackInst/bin/Debug/SmackInst.exe"]
+    smackinst_command += [args.bpl_file]
+    smackinst_command += [inst_bpl_file]
+    try_command(smackinst_command)
+
+    # run fastavn
+    fastavn_command = ["mono", "/mnt/local/av/AddOns/FastAVN/FastAVN/bin/Debug/FastAVN.exe"]
+    fastavn_command += [inst_bpl_file]
+    fastavn_command += ['/entryPointExcludes:"devirtbounce(\.\d+)?"', "/entryPointExcludes:__VERIFIER_error"]
+    fastavn_command += ["/hopt:killAfter:880"]
+    fastavn_command += ["/aopt:sdv", "/aopt:blockOnFreeVars", "/aopt:timeoutEE:200", "/aopt:timeout:880", "/aopt:noEbasic", "/aopt:dontGeneralize", "/aopt:dumpResults:results.txt", "/aopt:EE:onlySlicAssumes+", "/aopt:EE:ignoreAllAssumes-", "/aopt:EE:noFilters", "/aopt:killAfter:880", "/aopt:copt:recursionBound:13"]
+    fastavn_command += ["/killAfter:880", "/numThreads:64", "/useMemNotDisk", "/useEntryPoints"]
+
   else:
     # Duality!
     command = ["corral", args.bpl_file]
@@ -545,9 +567,21 @@ def verify_bpl(args):
   if args.verifier_options:
     command += args.verifier_options.split()
 
-  verifier_output = try_command(command, timeout=args.time_limit)
+  if args.verifier == 'fastavn':
+    try:
+      try_command(fastavn_command, cwd=work_dir, timeout=args.time_limit)
+    except Exception as e:
+      verifier_output = str(e)
+  else:
+    verifier_output = try_command(command, timeout=args.time_limit)
   verifier_output = transform_out(args, verifier_output)
-  result = verification_result(verifier_output)
+  if args.verifier == 'fastavn':
+    if re.search(r'Bugs\s+:\s+(\d+)', verifier_output):
+      result = 'error'
+    else:
+      result = 'verified'
+  else:
+    result = verification_result(verifier_output)
 
   if args.smackd:
     print smackdOutput(verifier_output)
