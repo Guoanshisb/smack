@@ -406,7 +406,7 @@ def llvm_to_bpl(args):
   if args.float: cmd += ['-float']
   if args.modular: cmd += ['-modular']
   if args.split_aggregate_values: cmd += ['-split-aggregate-values']
-  try_command(cmd, console=True)
+  try_command(cmd, console=True, timeout=args.time_limit)
   annotate_bpl(args)
   property_selection(args)
   transform_bpl(args)
